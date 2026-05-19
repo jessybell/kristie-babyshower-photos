@@ -1,0 +1,33 @@
+name: Download Lightroom Album
+
+on:
+  workflow_dispatch:
+    inputs:
+      album_url:
+        description: 'Link to your public Lightroom Album (e.g., https://adobe.ly/...)'
+        required: true
+        type: string
+
+jobs:
+  download_photos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Import Lightroom Album
+        uses: abstrctn/lightroom-album-import@v0.1.1
+        with:
+          album_url: ${{ github.event.inputs.album_url }}
+          download_directory: 'lightroom-photos'
+      
+      - name: Fix file permissions
+        run: sudo chown -R $USER lightroom-photos
+        
+      - name: Save Photos to Repository
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add lightroom-photos/
+          git commit -m "Add imported Lightroom photos" || echo "No new photos to commit"
+          git push
